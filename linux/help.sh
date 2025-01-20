@@ -51,7 +51,7 @@ echo_color $GREEN "services.list à la racine"
     echo
         echo_color $WHITE "Permet d'ajouter des services à charger dans la liste!"
     echo
-        echo_color $YELLOW "(Chemin du fichier) Exemple : services/exemple.service"
+        echo_color $YELLOW "(Chemin du fichier) Exemple : exemple.service"
 
 echo
 echo_color $GREEN "exemple.service dans le dossier services"
