@@ -1,0 +1,8 @@
+NAME=exemple
+MEMORY=512m
+PORT=80
+REPLICAS=1
+TYPE=
+NETWORK=my_network
+ENV=
+MOUNT=
