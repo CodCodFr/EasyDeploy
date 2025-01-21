@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Base directory and .env file path
-BASE_DIR="$(dirname "$(dirname "$(realpath "$0")")")" # Base directory is /
+# Charger les variables d'environnement depuis le fichier .env
+BASE_DIR="$(dirname "$(dirname "$(realpath "$0")")")" # Racine du projet (/)
+SERVICES_DIR="$BASE_DIR/services"                    # Chemin vers le dossier services
 ENV_FILE="$BASE_DIR/.env"
 
-# Load environment variables from the .env file
 if [ -f "$ENV_FILE" ]; then
     set -o allexport
     source "$ENV_FILE"
@@ -14,57 +14,85 @@ else
     exit 1
 fi
 
-# Default values
-REPLICAS=1
-MEMORY=512m
-PORT=80
-NETWORK="default_network"
-NAM="default_name"
-TYPE=""
-ENV_VARS=()
-MOUNTS=()
+# Fonction d'aide
+usage() {
+    echo "Usage: $0 -f SERVICE_FILE"
+    echo ""
+    echo "Arguments:"
+    echo "  -f SERVICE_FILE  Fichier de configuration du service (ex: evolu-front.service)"
+    echo ""
+    exit 1
+}
 
-# Parse arguments
-while getopts "r:me:p:net:nam:type:e:mo:" opt; do
-  case $opt in
-    r)
-      REPLICAS=$OPTARG
-      ;;
-    me)
-      MEMORY="${OPTARG}m"
-      ;;
-    p)
-      PORT=$OPTARG
-      ;;
-    net)
-      NETWORK=$OPTARG
-      ;;
-    nam)
-      NAM=$OPTARG
-      ;;
-    type)
-      TYPE=$OPTARG
-      ;;
-    e)
-      ENV_VARS+=("$OPTARG")
-      ;;
-    mo)
-      MOUNTS+=("$OPTARG")
-      ;;
-    *)
-      echo "Usage: $0 -r <replicas> -me <memory_in_MB> -p <port> -net <network> -nam <name> -e <env_var> -mo <mount>"
-      exit 1
-      ;;
-  esac
+# Lire les arguments
+while getopts "f:" opt; do
+    case $opt in
+        f) SERVICE_FILE="$OPTARG" ;;
+        *) usage ;;
+    esac
 done
 
-# Create options for environment variables
-ENV_OPTS=""
-for ENV_VAR in "${ENV_VARS[@]}"; do
-  ENV_OPTS+="--env $ENV_VAR "
-done
+# Vérifier si un fichier a été fourni
+if [ -z "$SERVICE_FILE" ]; then
+    echo "Error: Missing -f argument"
+    usage
+fi
 
-# Create options for mounts
-MOUNT_OPTS=""
-for MOUNT in "${MOUNTS[@]}"; do
-  MOUNT_OPTS+="--
+# Vérifier l'existence du fichier de service
+SERVICE_FILE_PATH="$SERVICES_DIR/$SERVICE_FILE"
+if [ ! -f "$SERVICE_FILE_PATH" ]; then
+    echo "Error: Service file $SERVICE_FILE_PATH not found"
+    exit 1
+fi
+
+# Charger les variables depuis le fichier de service
+source "$SERVICE_FILE_PATH"
+
+# Vérifier les variables obligatoires
+if [ -z "$NAME" ] || [ -z "$MEMORY" ] || [ -z "$PORT" ] || [ -z "$REPLICAS" ] || [ -z "$NETWORK" ]; then
+    echo "Error: Missing required variables in $SERVICE_FILE_PATH"
+    exit 1
+fi
+
+# Préparer les variables d'environnement
+ENV_ARGS=()
+if [ -n "$ENV" ]; then
+    IFS=',' read -r -a ENV_VARS <<< "$ENV"
+    for ENV_VAR in "${ENV_VARS[@]}"; do
+        VALUE=${!ENV_VAR}
+        if [ -n "$VALUE" ]; then
+            ENV_ARGS+=("--env=${ENV_VAR}=${VALUE}")
+        else
+            echo "Warning: Environment variable $ENV_VAR is not defined in the .env file"
+        fi
+    done
+fi
+
+# Créer le service Docker
+if [ -n "$TYPE" ]; then
+    docker pull "$TYPE"
+    echo "Creating service $NAME with external image $TYPE on network $NETWORK"
+    docker service create \
+        --name "$NAME" \
+        "${ENV_ARGS[@]}" \
+        --replicas "$REPLICAS" \
+        --limit-memory "$MEMORY" \
+        -p "$PORT:$PORT" \
+        --network "$NETWORK" \
+        ${MOUNT:+--mount "$MOUNT"} \
+        "$TYPE"
+else
+    docker pull ghcr.io/gaetanse/${NAME}-image:latest
+    echo "Creating service $NAME with custom image ghcr.io/gaetanse/${NAME}-image:latest on network $NETWORK"
+    docker service create \
+        --name "$NAME" \
+        "${ENV_ARGS[@]}" \
+        --replicas "$REPLICAS" \
+        --limit-memory "$MEMORY" \
+        -p "$PORT:$PORT" \
+        --network "$NETWORK" \
+        ${MOUNT:+--mount "$MOUNT"} \
+        "ghcr.io/gaetanse/${NAME}-image:latest"
+fi
+
+echo "Service $NAME created with $REPLICAS replicas, memory $MEMORY, port $PORT, network $NETWORK, environment variables: ${ENV_VARS[*]}, and mount: $MOUNT"

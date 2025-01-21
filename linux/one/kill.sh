@@ -17,4 +17,5 @@ while getopts "n:" opt; do
 done
 
 # Scale down and remove the service
-docker service scale "$NAME"
+docker service scale "$NAME"=0
+docker service rm "$service"
