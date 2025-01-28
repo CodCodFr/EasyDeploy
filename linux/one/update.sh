@@ -50,12 +50,12 @@ if [ -z "$TYPE" ]; then
     echo "Pulling image $IMAGE"
     docker pull "$IMAGE"
     echo "Updating service $NAME with image $IMAGE"
-    docker service update --image "$IMAGE" "$NAME"
+    docker service update --image "$IMAGE" --force "$NAME"
 else
     echo "Pulling image $TYPE"
     docker pull "$TYPE"
     echo "Updating service $NAME with image $TYPE"
-    docker service update --image "$TYPE" "$NAME"
+    docker service update --image "$TYPE" --force "$NAME"
 fi
 
 echo "Service $NAME updated successfully."
