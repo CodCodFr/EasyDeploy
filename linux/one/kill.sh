@@ -18,4 +18,4 @@ done
 
 # Scale down and remove the service
 docker service scale "$NAME"=0
-docker service rm "$service"
+docker service rm "$NAME"
