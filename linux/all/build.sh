@@ -16,6 +16,8 @@ else
     exit 1
 fi
 
+echo "Searching for .env file at: $ENV_FILE"
+
 # Vérifier l'existence de la liste des services
 if [ ! -f "$SERVICES_LIST" ]; then
     echo "Error: $SERVICES_LIST file not found at $SERVICES_LIST"

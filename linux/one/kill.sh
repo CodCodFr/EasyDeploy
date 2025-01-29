@@ -4,13 +4,13 @@
 NAME="default_name"
 
 # Parse the arguments
-while getopts "n:" opt; do
+while getopts "f:" opt; do
   case $opt in
-    n)
+    f)
       NAME=$OPTARG
       ;;
     *)
-      echo "Usage: $0 -n <service_name>"
+      echo "Usage: $0 -f <service_name>"
       exit 1
       ;;
   esac

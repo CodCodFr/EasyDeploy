@@ -1,28 +1,31 @@
 #!/bin/bash
 
+# Get the directory of the current script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Load environment variables from ../.env (one level up)
+if [ -f "$SCRIPT_DIR/../.env" ]; then
+    set -o allexport
+    source "$SCRIPT_DIR/../.env"
+    set +o allexport
+fi
+
 # Default container name and backup name
 CONTAINER_NAME=""
 BACKUP_NAME=""
 
 # Parse arguments
-while getopts "n:b:" opt; do
+while getopts "f:b:" opt; do
     case "$opt" in
-        n) CONTAINER_NAME="$OPTARG" ;;  # Container name
-        b) BACK_NAME="$OPTARG" ;;      # Back name (optional)
-        *) echo "Usage: $0 -n <container_name> -b <backup_name>"
+        f) CONTAINER_NAME="$OPTARG" ;;  # Container name
+        *) echo "Usage: $0 -f <container_name>"
            exit 1 ;;
     esac
 done
 
 # Check if the container name is provided
 if [ -z "$CONTAINER_NAME" ]; then
-    echo "Container name is required. Usage: $0 -n <container_name> -b <backup_name>"
-    exit 1
-fi
-
-# Check if the container name is provided
-if [ -z "$BACK_NAME" ]; then
-    echo "Container back name is required. Usage: $0 -n <container_name> -b <backup_name>"
+    echo "Container name is required. Usage: $0 -f <container_name>"
     exit 1
 fi
 
@@ -36,24 +39,9 @@ fi
 
 # Run the psql command to delete all tables
 echo "Dropping all tables in the database for container '$CONTAINER_ID'..."
-docker exec -it "$CONTAINER_ID" psql -U your_db_user -d your_db_name -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+docker exec -i "$CONTAINER_ID" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 echo "All tables have been deleted in container '$CONTAINER_ID'."
-
-# Run kill.sh with the container name
-#echo "Running kill.sh to stop and remove the container..."
-#./one/kill.sh -n "$CONTAINER_NAME"
-
-# Run build.sh with the corresponding service file
-#SERVICE_FILE="${CONTAINER_NAME}.service"
-#echo "Running build.sh to recreate the service..."
-#./one/build.sh -f "$SERVICE_FILE"
-
-# Check if a backup name is provided and run restart.sh if necessary
-if [ -n "$BACK_NAME" ]; then
-    echo "Running restart.sh for back '$BACK_NAME'..."
-    ./one/update.sh -f "$BACK_NAME"
-fi
 
 # Final confirmation
 echo "Service '$CONTAINER_NAME' has been updated and recreated."
-
+echo "Warning: don't forget to update backend for send first sql!"
