@@ -61,7 +61,7 @@ while read -r SERVICE_FILE; do
             "${ENV_ARGS[@]}" \
             --replicas "$REPLICAS" \
             --limit-memory "$MEMORY" \
-            -p "$PORT:$PORT" \
+            -p "$PORT1:$PORT2" \
             --network "$NETWORK" \
             ${MOUNT:+--mount "$MOUNT"} \
             "$TYPE"
@@ -73,7 +73,7 @@ while read -r SERVICE_FILE; do
             "${ENV_ARGS[@]}" \
             --replicas "$REPLICAS" \
             --limit-memory "$MEMORY" \
-            -p "$PORT:$PORT" \
+            -p "$PORT1:$PORT2" \
             --network "$NETWORK" \
             ${MOUNT:+--mount "$MOUNT"} \
             "ghcr.io/gaetanse/${NAME}-image:latest"

@@ -49,7 +49,7 @@ fi
 source "$SERVICE_FILE_PATH"
 
 # Vérifier les variables obligatoires
-if [ -z "$NAME" ] || [ -z "$MEMORY" ] || [ -z "$PORT" ] || [ -z "$REPLICAS" ] || [ -z "$NETWORK" ]; then
+if [ -z "$NAME" ] || [ -z "$MEMORY" ] || [ -z "$PORT1" ] || [ -z "$PORT2" ] || [ -z "$REPLICAS" ] || [ -z "$NETWORK" ]; then
     echo "Error: Missing required variables in $SERVICE_FILE_PATH"
     exit 1
 fi
@@ -77,7 +77,7 @@ if [ -n "$TYPE" ]; then
         "${ENV_ARGS[@]}" \
         --replicas "$REPLICAS" \
         --limit-memory "$MEMORY" \
-        -p "$PORT:$PORT" \
+        -p "$PORT1:$PORT2" \
         --network "$NETWORK" \
         ${MOUNT:+--mount "$MOUNT"} \
         "$TYPE"
@@ -89,7 +89,7 @@ else
         "${ENV_ARGS[@]}" \
         --replicas "$REPLICAS" \
         --limit-memory "$MEMORY" \
-        -p "$PORT:$PORT" \
+        -p "$PORT1:$PORT2" \
         --network "$NETWORK" \
         ${MOUNT:+--mount "$MOUNT"} \
         "ghcr.io/gaetanse/${NAME}-image:latest"
