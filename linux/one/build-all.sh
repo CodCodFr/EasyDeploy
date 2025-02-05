@@ -38,7 +38,7 @@ while read -r SERVICE_FILE; do
 
     # Debug des valeurs chargées
     echo "Processing service: $NAME"
-    echo "Parsed values - NAME: $NAME, MEMORY: $MEMORY, PORT: $PORT, REPLICAS: $REPLICAS, TYPE: $TYPE, NETWORK: $NETWORK, ENV: $ENV, MOUNT: $MOUNT"
+    echo "Parsed values - NAME: $NAME, MEMORY: $MEMORY, PORT: $PORT, REPLICAS: $REPLICAS, TYPE: $TYPE, NETWORK: $NETWORK, ENV: $ENV"
 
     # Préparer les variables d'environnement
     ENV_ARGS=()
@@ -52,6 +52,25 @@ while read -r SERVICE_FILE; do
         fi
     done
 
+    # Vérifier si PORT2 est vide et ajuster la commande docker
+    if [ -z "$PORT2" ]; then
+        echo "Only one port specified: $PORT1"
+        PORT_ARGS="-p $PORT1"
+    else
+        PORT_ARGS="-p $PORT1 -p $PORT2"
+    fi
+
+    # Assuming MOUNT_ARGS is being populated like this (from your previous logic)
+MOUNT_ARGS=()
+if [ -n "$MOUNT_FROM_HOSTS" ]; then
+    IFS=',' read -r -a MOUNTS <<< "$MOUNT_FROM_HOSTS"
+    for MOUNT in "${MOUNTS[@]}"; do
+        # Split source, target, and options (e.g., :ro)
+        IFS=':' read -r SOURCE TARGET OPTIONS <<< "$MOUNT"
+        MOUNT_ARGS+=("--mount type=bind,source=$SOURCE,target=$TARGET$([ -n "$OPTIONS" ] && echo ":$OPTIONS")")
+    done
+fi
+
     # Créer le service Docker
     if [ -n "$TYPE" ]; then
         docker pull "$TYPE"
@@ -61,9 +80,9 @@ while read -r SERVICE_FILE; do
             "${ENV_ARGS[@]}" \
             --replicas "$REPLICAS" \
             --limit-memory "$MEMORY" \
-            -p "$PORT1:$PORT2" \
+            $PORT_ARGS \
             --network "$NETWORK" \
-            ${MOUNT:+--mount "$MOUNT"} \
+            ${MOUNT_ARGS:+${MOUNT_ARGS[@]}} \
             "$TYPE"
     else
         docker pull ghcr.io/gaetanse/${NAME}-image:latest
@@ -73,11 +92,11 @@ while read -r SERVICE_FILE; do
             "${ENV_ARGS[@]}" \
             --replicas "$REPLICAS" \
             --limit-memory "$MEMORY" \
-            -p "$PORT1:$PORT2" \
+            $PORT_ARGS \
             --network "$NETWORK" \
-            ${MOUNT:+--mount "$MOUNT"} \
+            ${MOUNT_ARGS:+${MOUNT_ARGS[@]}} \
             "ghcr.io/gaetanse/${NAME}-image:latest"
     fi
 
-    echo "Service $NAME created with $REPLICAS replicas, memory $MEMORY, port $PORT, network $NETWORK, environment variables: ${ENV_VARS[*]}, and mount: $MOUNT"
+    echo "Service $NAME created with $REPLICAS replicas, memory $MEMORY, port $PORT, network $NETWORK, environment variables: ${ENV_VARS[*]}"
 done < "$SERVICES_LIST"

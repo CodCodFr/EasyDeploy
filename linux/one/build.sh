@@ -49,7 +49,7 @@ fi
 source "$SERVICE_FILE_PATH"
 
 # Vérifier les variables obligatoires
-if [ -z "$NAME" ] || [ -z "$MEMORY" ] || [ -z "$PORT1" ] || [ -z "$PORT2" ] || [ -z "$REPLICAS" ] || [ -z "$NETWORK" ]; then
+if [ -z "$NAME" ] || [ -z "$MEMORY" ] || [ -z "$PORT1" ] || [ -z "$REPLICAS" ] || [ -z "$NETWORK" ]; then
     echo "Error: Missing required variables in $SERVICE_FILE_PATH"
     exit 1
 fi
@@ -68,6 +68,34 @@ if [ -n "$ENV" ]; then
     done
 fi
 
+# Vérifier si PORT2 est vide et ajuster la commande docker
+if [ -z "$PORT2" ]; then
+    echo "Only one port specified: $PORT1"
+    PORT_ARGS="-p $PORT1"
+else
+    PORT_ARGS="-p $PORT1 -p $PORT2"
+fi
+
+echo $PORT_ARGS
+
+# Préparer les mounts depuis les hôtes
+MOUNT_ARGS=()
+if [ -n "$MOUNT_FROM_HOSTS" ]; then
+    IFS=',' read -r -a MOUNTS <<< "$MOUNT_FROM_HOSTS"
+    for MOUNT in "${MOUNTS[@]}"; do
+        # Séparer la source, la cible et les options (par exemple: :ro)
+        IFS=':' read -r SOURCE TARGET OPTIONS <<< "$MOUNT"
+        # Appliquer le flag --mount pour chaque montage
+        MOUNT_ARGS+=("--mount type=bind,source=$SOURCE,target=$TARGET$([ -n "$OPTIONS" ] && echo ":$OPTIONS")")
+    done
+fi
+
+# Debug: Afficher les MOUNT_ARGS
+echo "MOUNT_ARGS:"
+for ARG in "${MOUNT_ARGS[@]}"; do
+    echo "$ARG"
+done
+
 # Créer le service Docker
 if [ -n "$TYPE" ]; then
     docker pull "$TYPE"
@@ -77,9 +105,9 @@ if [ -n "$TYPE" ]; then
         "${ENV_ARGS[@]}" \
         --replicas "$REPLICAS" \
         --limit-memory "$MEMORY" \
-        -p "$PORT1:$PORT2" \
+        $PORT_ARGS \
         --network "$NETWORK" \
-        ${MOUNT:+--mount "$MOUNT"} \
+        ${MOUNT_ARGS:+${MOUNT_ARGS[@]}} \
         "$TYPE"
 else
     docker pull ghcr.io/gaetanse/${NAME}-image:latest
@@ -89,9 +117,9 @@ else
         "${ENV_ARGS[@]}" \
         --replicas "$REPLICAS" \
         --limit-memory "$MEMORY" \
-        -p "$PORT1:$PORT2" \
+        $PORT_ARGS \
         --network "$NETWORK" \
-        ${MOUNT:+--mount "$MOUNT"} \
+        ${MOUNT_ARGS:+${MOUNT_ARGS[@]}} \
         "ghcr.io/gaetanse/${NAME}-image:latest"
 fi
 
