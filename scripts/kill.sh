@@ -16,15 +16,28 @@ while getopts "f:" opt; do
   esac
 done
 
-# Get the number of replicas for the service
-REPLICAS=$(docker service inspect --format '{{.Spec.Mode.Replicated.Replicas}}' "$SERVICE_NAME")
-
-# Check if the replica count is greater than 0
-if [[ "$REPLICAS" -gt 0 ]]; then
-    echo "Scaling down '$SERVICE_NAME' from $REPLICAS to 0 replicas."
-    docker service scale "$SERVICE_NAME"=0
-else
-    echo "Service '$SERVICE_NAME' already has 0 replicas. Skipping."
+# Check if the service exists
+if ! docker service ls | grep -q "$SERVICE_NAME"; then
+    echo "Service '$SERVICE_NAME' not found. Exiting."
+    exit 1
 fi
 
-docker service rm "$NAME"
+# Get the service mode
+MODE=$(docker service inspect --format '{{.Spec.Mode.Global}}' "$SERVICE_NAME")
+
+if [ "$MODE" != "<nil>" ]; then
+    echo "Service '$SERVICE_NAME' is in global mode. Removing..."
+    docker service rm "$SERVICE_NAME"
+else
+    # It's a replicated service, get the number of replicas
+    REPLICAS=$(docker service inspect --format '{{.Spec.Mode.Replicated.Replicas}}' "$SERVICE_NAME")
+    if [[ "$REPLICAS" -gt 0 ]]; then
+        echo "Scaling down '$SERVICE_NAME' from $REPLICAS to 0 replicas."
+        docker service scale "$SERVICE_NAME"=0
+        # Only remove after scaling down
+        docker service rm "$SERVICE_NAME"
+    else
+        echo "Service '$SERVICE_NAME' already has 0 replicas. Removing..."
+        docker service rm "$SERVICE_NAME"
+    fi
+fi
