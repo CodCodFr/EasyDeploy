@@ -42,7 +42,7 @@ if [ -f "$ENV_FILE" ]; then
     source "$ENV_FILE"
     set +o allexport
 else
-    echo "Error: .env file not found in $BASE_DIR"
+    echo "Error: $SERVICE_FILE.env file not found in $BASE_DIR"
     exit 1
 fi
 
