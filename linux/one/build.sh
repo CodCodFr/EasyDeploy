@@ -49,9 +49,29 @@ fi
 source "$SERVICE_FILE_PATH"
 
 # Vérifier les variables obligatoires
-if [ -z "$NAME" ] || [ -z "$MEMORY" ] || [ -z "$PORT" ] || [ -z "$REPLICAS" ] || [ -z "$NETWORK" ]; then
+if [ -z "$NAME" ] || [ -z "$MEMORY" ]; then
     echo "Error: Missing required variables in $SERVICE_FILE_PATH"
     exit 1
+fi
+
+MODE_ARG=""
+if [ -n "$MODE" ]; then
+    MODE_ARG="--mode $MODE"
+fi
+
+NETWORK_ARG=""
+if [ -n "$NETWORK" ]; then
+    NETWORK_ARG="--network $NETWORK"
+fi
+
+REPLICAS_ARG=""
+if [ -n "$REPLICAS" ]; then
+        REPLICAS_ARG="--replicas $REPLICAS"
+fi
+
+ADDHOST_ARG=""
+if [ -n "$ADDHOST" ]; then
+    ADDHOST_ARG="--add-host $ADDHOST"
 fi
 
 # Préparer les variables d'environnement
@@ -68,6 +88,36 @@ if [ -n "$ENV" ]; then
     done
 fi
 
+PORT1_ARG=""
+if [ -n "$PORT1" ]; then
+    PORT1_ARG="-p $PORT1"
+fi
+
+PORT2_ARG=""
+if [ -n "$PORT2" ]; then
+    PORT2_ARG="-p $PORT2"
+fi
+
+PORTS_ARG="$PORT1_ARG $PORT2_ARG"
+
+# Préparer les mounts depuis les hôtes
+MOUNT_ARGS=()
+if [ -n "$MOUNT_FROM_HOSTS" ]; then
+    IFS=',' read -r -a MOUNTS <<< "$MOUNT_FROM_HOSTS"
+    for MOUNT in "${MOUNTS[@]}"; do
+        # Séparer la source, la cible et les options (par exemple: :ro)
+        IFS=':' read -r SOURCE TARGET OPTIONS <<< "$MOUNT"
+        # Appliquer le flag --mount pour chaque montage
+        MOUNT_ARGS+=("--mount type=bind,source=$SOURCE,target=$TARGET$([ -n "$OPTIONS" ] && echo ":$OPTIONS")")
+    done
+fi
+
+# Debug: Afficher les MOUNT_ARGS
+echo "MOUNT_ARGS:"
+for ARG in "${MOUNT_ARGS[@]}"; do
+    echo "$ARG"
+done
+
 # Créer le service Docker
 if [ -n "$TYPE" ]; then
     docker pull "$TYPE"
@@ -75,24 +125,28 @@ if [ -n "$TYPE" ]; then
     docker service create \
         --name "$NAME" \
         "${ENV_ARGS[@]}" \
-        --replicas "$REPLICAS" \
+        $REPLICAS_ARG \
         --limit-memory "$MEMORY" \
-        -p "$PORT:$PORT" \
-        --network "$NETWORK" \
-        ${MOUNT:+--mount "$MOUNT"} \
+        $PORTS_ARGS \
+        $NETWORK_ARG \
+        ${MOUNT_ARGS:+${MOUNT_ARGS[@]}} \
         "$TYPE"
 else
     docker pull ghcr.io/gaetanse/${NAME}-image:latest
     echo "Creating service $NAME with custom image ghcr.io/gaetanse/${NAME}-image:latest on network $NETWORK"
-    docker service create \
+
+        docker service create \
         --name "$NAME" \
         "${ENV_ARGS[@]}" \
-        --replicas "$REPLICAS" \
+        $REPLICAS_ARG \
         --limit-memory "$MEMORY" \
-        -p "$PORT:$PORT" \
-        --network "$NETWORK" \
-        ${MOUNT:+--mount "$MOUNT"} \
+        $PORTS_ARG \
+        $NETWORK_ARG \
+        $MODE_ARG \
+        $ADDHOST_ARG \
+        ${MOUNT_ARGS:+${MOUNT_ARGS[@]}} \
         "ghcr.io/gaetanse/${NAME}-image:latest"
+
 fi
 
 echo "Service $NAME created with $REPLICAS replicas, memory $MEMORY, port $PORT, network $NETWORK, environment variables: ${ENV_VARS[*]}, and mount: $MOUNT"
