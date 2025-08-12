@@ -3,23 +3,13 @@
 # Charger les variables d'environnement depuis le fichier .env
 BASE_DIR="$(dirname "$(dirname "$(realpath "$0")")")" # Racine du projet (/)
 SERVICES_DIR="$BASE_DIR/services"                    # Chemin vers le dossier services
-ENV_FILE="$BASE_DIR/.env"
-
-if [ -f "$ENV_FILE" ]; then
-    set -o allexport
-    source "$ENV_FILE"
-    set +o allexport
-else
-    echo "Error: .env file not found in $BASE_DIR"
-    exit 1
-fi
 
 # Fonction d'aide
 usage() {
     echo "Usage: $0 -f SERVICE_FILE"
     echo ""
     echo "Arguments:"
-    echo "  -f SERVICE_FILE  Fichier de configuration du service (ex: evolu-front.service)"
+    echo "  -f service"
     echo ""
     exit 1
 }
@@ -39,9 +29,20 @@ if [ -z "$SERVICE_FILE" ]; then
 fi
 
 # Vérifier l'existence du fichier de service
-SERVICE_FILE_PATH="$SERVICES_DIR/$SERVICE_FILE"
+SERVICE_FILE_PATH="$SERVICES_DIR/$SERVICE_FILE.service"
 if [ ! -f "$SERVICE_FILE_PATH" ]; then
     echo "Error: Service file $SERVICE_FILE_PATH not found"
+    exit 1
+fi
+
+ENV_FILE="$BASE_DIR/$SERVICE_FILE.env"
+
+if [ -f "$ENV_FILE" ]; then
+    set -o allexport
+    source "$ENV_FILE"
+    set +o allexport
+else
+    echo "Error: .env file not found in $BASE_DIR"
     exit 1
 fi
 
