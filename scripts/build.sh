@@ -39,7 +39,7 @@ ENV_FILE="$BASE_DIR/$SERVICE_FILE.env"
 
 if [ -f "$ENV_FILE" ]; then
     set -o allexport
-    source "$ENV_FILE"
+    sudo source "$ENV_FILE"
     set +o allexport
 else
     echo "Error: $SERVICE_FILE.env file not found in $BASE_DIR"
