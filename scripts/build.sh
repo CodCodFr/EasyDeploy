@@ -35,11 +35,16 @@ if [ ! -f "$SERVICE_FILE_PATH" ]; then
     exit 1
 fi
 
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run as root (using sudo)"
+  exit 1
+fi
+
 ENV_FILE="$BASE_DIR/$SERVICE_FILE.env"
 
 if [ -f "$ENV_FILE" ]; then
     set -o allexport
-    sudo source "$ENV_FILE"
+    source "$ENV_FILE"
     set +o allexport
 else
     echo "Error: $SERVICE_FILE.env file not found in $BASE_DIR"
