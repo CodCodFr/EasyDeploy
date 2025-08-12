@@ -1,8 +1,10 @@
-NAME=exemple
+NAME=observation-back
 MEMORY=512m
-PORT=80
+PORT1=
+PORT2=
 REPLICAS=1
 TYPE=
-NETWORK=my_network
-ENV=
-MOUNT=
+NETWORK=host
+MODE=global
+ENV=DATABASE_URL,NPM_TOKEN
+MOUNT_FROM_HOSTS="/etc/letsencrypt:/etc/letsencrypt,/home/user:/home/user"
