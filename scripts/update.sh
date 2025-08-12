@@ -30,7 +30,7 @@ fi
 SERVICES_DIR="$BASE_DIR/$SERVICE_FILE"
 
 # Vérifier l'existence du fichier de service
-SERVICE_FILE_PATH="$SERVICE_DIR/$SERVICE_FILE"
+SERVICE_FILE_PATH="$SERVICE_DIR/$SERVICE_FILE.service"
 if [ ! -f "$SERVICE_FILE_PATH" ]; then
     echo "Error: Service file $SERVICE_FILE_PATH not found"
     exit 1
