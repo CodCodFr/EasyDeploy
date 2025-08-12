@@ -2,7 +2,6 @@
 
 # Base directory paths
 BASE_DIR="$(dirname "$(dirname "$(realpath "$0")")")" # Racine du projet (/)
-SERVICES_DIR="$BASE_DIR/services"                    # Chemin vers le dossier services
 
 # Fonction d'aide
 usage() {
@@ -28,8 +27,10 @@ if [ -z "$SERVICE_FILE" ]; then
     usage
 fi
 
+SERVICES_DIR="$BASE_DIR/$SERVICE_FILE"
+
 # Vérifier l'existence du fichier de service
-SERVICE_FILE_PATH="$SERVICES_DIR/$SERVICE_FILE"
+SERVICE_FILE_PATH="$SERVICE_DIR/$SERVICE_FILE"
 if [ ! -f "$SERVICE_FILE_PATH" ]; then
     echo "Error: Service file $SERVICE_FILE_PATH not found"
     exit 1
