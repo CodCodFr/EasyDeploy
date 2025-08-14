@@ -4,9 +4,26 @@ $SERVICE_NAME = ""
 $DOCKER_REPO = ""
 $DOCKER_IMAGE_NAME = "$DOCKER_REPO/$SERVICE_NAME"
 $IMAGE_TAG = git log -1 --pretty=format:%H # Récupérez le dernier commit hash pour l'ensemble du dépôt
-$envFilePath = ".\$SERVICE_NAME.env"
+$envFilePath = ".\.env"
 $BASE_HREF = "/"
 $BUILDER_NAME = ""
+
+# --- 1. Load environment variables from .env file ---
+Write-Host "Loading environment variables from .env file..."
+if (Test-Path $envFilePath) {
+    Get-Content $envFilePath | ForEach-Object {
+        if ($_ -match "^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$") {
+            $envName = $matches[1]
+            $envValue = $matches[2]
+            # Set for the current process, accessible by subsequent commands
+            [System.Environment]::SetEnvironmentVariable($envName, $envValue, [System.EnvironmentVariableTarget]::Process)
+            Write-Host "  - Loaded $envName"
+        }
+    }
+} else {
+    Write-Error "Error: .env file not found at $envFilePath"
+    Exit 1
+}
 
 # --- 2. Build the Ionic application locally with correct base HREF ---
 Write-Host "Running Ionic production build locally with a base HREF of '/'..."
