@@ -1,62 +1,60 @@
-#!/bin/bash
+# ==============================================================================
+# Script pour puller l'image et déployer sur un serveur distant (VPS)
+# ==============================================================================
 
-# Base directory paths
-BASE_DIR="$(dirname "$(dirname "$(realpath "$0")")")" # Racine du projet (/)
+# ==============================================================================
+# Utilisation:
+# ./deploy_script.sh [stack_name] [service_name] [image_repo] [image_tag]
+#
+# Exemple:
+# ./deploy_script.sh codcod future-front ghcr.io/gaetanse/future-front-image e20e92094aec8e551f56176a3cdcfee19a15d7a8
+# ==============================================================================
 
-# Fonction d'aide
-usage() {
-    echo "Usage: $0 -f SERVICE_FILE"
-    echo ""
-    echo "Arguments:"
-    echo "  -f SERVICE_FILE  Fichier de configuration du service (ex: exemple.service)"
-    echo ""
-    exit 1
-}
+# ==============================================================================
+# 1. Récupération des arguments
+# ==============================================================================
 
-# Lire les arguments
-while getopts "f:" opt; do
-    case $opt in
-        f) SERVICE_FILE="$OPTARG" ;;
-        *) usage ;;
-    esac
-done
+stackName="$1"
+serviceName="$2"
+imageRepo="$3"
+imageTagToDeploy="$4"
 
-# Vérifier si un fichier a été fourni
-if [ -z "$SERVICE_FILE" ]; then
-    echo "Error: Missing -f argument"
-    usage
-fi
-
-SERVICES_DIR="$BASE_DIR/$SERVICE_FILE"
-
-# Vérifier l'existence du fichier de service
-SERVICE_FILE_PATH="$SERVICE_DIR/$SERVICE_FILE.service"
-if [ ! -f "$SERVICE_FILE_PATH" ]; then
-    echo "Error: Service file $SERVICE_FILE_PATH not found"
+# Vérification des arguments
+if [ -z "$stackName" ] || [ -z "$serviceName" ] || [ -z "$imageRepo" ] || [ -z "$imageTagToDeploy" ]; then
+    echo "Erreur: Tous les arguments sont requis."
+    echo "Utilisation: ./deploy_script.sh [stack_name] [service_name] [image_repo] [image_tag]"
     exit 1
 fi
 
-# Charger les variables depuis le fichier de service
-source "$SERVICE_FILE_PATH"
+# ==============================================================================
+# 2. Pull et déploiement de la stack Docker Swarm
+# ==============================================================================
 
-# Vérifier les variables obligatoires
-if [ -z "$NAME" ]; then
-    echo "Error: NAME variable is missing in $SERVICE_FILE_PATH"
+echo "Mise à jour de la stack Docker Swarm '$stackName'..."
+echo "Service: $serviceName"
+echo "Image: $imageRepo:$imageTagToDeploy"
+
+# Récupérer l'image spécifiée
+docker compose pull "$serviceName"
+
+# Vérifier si la commande précédente a échoué
+if [ $? -ne 0 ]; then
+    echo "Erreur lors du pull de l'image Docker."
     exit 1
 fi
 
-# Mettre à jour le service Docker
-if [ -z "$TYPE" ]; then
-    IMAGE="ghcr.io/gaetanse/${NAME}-image:latest"
-    echo "Pulling image $IMAGE"
-    docker pull "$IMAGE"
-    echo "Updating service $NAME with image $IMAGE"
-    docker service update --image "$IMAGE" --force "$NAME"
-else
-    echo "Pulling image $TYPE"
-    docker pull "$TYPE"
-    echo "Updating service $NAME with image $TYPE"
-    docker service update --image "$TYPE" --force "$NAME"
+# Mettre à jour l'image du service dans le docker-compose.yml
+# L'image est remplacée par la nouvelle imageTagToDeploy
+sed -i "s|image: $imageRepo:.*|image: $imageRepo:$imageTagToDeploy|" docker-compose.yml
+
+# Déployer la stack avec l'image mise à jour.
+# L'option --with-registry-auth est essentielle pour les registres privés.
+docker stack deploy -c docker-compose.yml "$stackName" --with-registry-auth
+
+# Vérifier si la commande précédente a échoué
+if [ $? -ne 0 ]; then
+    echo "Le déploiement de la stack a échoué."
+    exit 1
 fi
 
-echo "Service $NAME updated successfully."
+echo "Stack '$stackName' mise à jour avec succès."
