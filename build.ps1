@@ -83,6 +83,8 @@ try {
     Exit 1
 }
 
+$IMAGE_TAG = git log -1 --pretty=format:%H # Récupérez le dernier commit hash pour l'ensemble du dépôt
+
 # --- 5. Build and Push Multi-Architecture Docker Image ---
 Write-Host "Building and pushing multi-architecture Docker image to ${DOCKER_IMAGE_NAME}:${IMAGE_TAG}..."
 
