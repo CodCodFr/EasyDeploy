@@ -1,12 +1,34 @@
-# --- Configuration ---
-$STACK_NAME = ""
-$SERVICE_NAME = ""
-$DOCKER_REPO = ""
-$DOCKER_IMAGE_NAME = "$DOCKER_REPO/$SERVICE_NAME"
-$IMAGE_TAG = git log -1 --pretty=format:%H # Récupérez le dernier commit hash pour l'ensemble du dépôt
-$envFilePath = ".\.env"
-$BASE_HREF = "/"
-$BUILDER_NAME = ""
+# Définir le chemin du fichier de données
+$dataPath = ".\data.psd1"
+
+# Vérifier si le fichier de données existe
+if (-not (Test-Path -Path $dataPath)) {
+    Write-Error "Erreur : Le fichier de données '$dataPath' est introuvable."
+    exit 1
+}
+
+# Importer les données
+$data = Import-PowerShellDataFile -Path $dataPath
+
+# Définir la liste des variables obligatoires
+$requiredVariables = @("STACK_NAME", "SERVICE_NAME", "DOCKER_REPO", "DOCKER_IMAGE_NAME", "ENV_FILE_PATH", "BASE_HREF", "BUILDER_NAME")
+
+# Vérifier la présence de chaque variable obligatoire
+foreach ($variable in $requiredVariables) {
+    if (-not $data.ContainsKey($variable)) {
+        Write-Error "Erreur : La variable '$variable' est manquante dans le fichier de données '$dataPath'."
+        exit 1
+    }
+}
+
+# Affecter les valeurs importées à vos variables
+$STACK_NAME = $data.STACK_NAME
+$SERVICE_NAME = $data.SERVICE_NAME
+$DOCKER_REPO = $data.DOCKER_REPO
+$DOCKER_IMAGE_NAME = "$($data.DOCKER_IMAGE_NAME)"
+$ENV_FILE_PATH = $data.ENV_FILE_PATH
+$BASE_HREF = $data.BASE_HREF
+$BUILDER_NAME = $data.BUILDER_NAME
 
 # --- 1. Load environment variables from .env file ---
 Write-Host "Loading environment variables from .env file..."
