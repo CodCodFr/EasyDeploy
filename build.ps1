@@ -1,5 +1,5 @@
 # Définir le chemin du fichier de données
-$dataPath = ".\data.psd1"
+$dataPath = ".\EasyDeploy\data.psd1"
 
 # Vérifier si le fichier de données existe
 if (-not (Test-Path -Path $dataPath)) {
@@ -25,15 +25,17 @@ foreach ($variable in $requiredVariables) {
 $STACK_NAME = $data.STACK_NAME
 $SERVICE_NAME = $data.SERVICE_NAME
 $DOCKER_REPO = $data.DOCKER_REPO
-$DOCKER_IMAGE_NAME = "$($data.DOCKER_IMAGE_NAME)"
+$DOCKER_IMAGE_NAME = $data.DOCKER_IMAGE_NAME
 $ENV_FILE_PATH = $data.ENV_FILE_PATH
 $BASE_HREF = $data.BASE_HREF
 $BUILDER_NAME = $data.BUILDER_NAME
 
+$DOCKER_IMAGE_NAME_COMPLETE = "$DOCKER_REPO/$DOCKER_IMAGE_NAME"
+
 # --- 1. Load environment variables from .env file ---
 Write-Host "Loading environment variables from .env file..."
-if (Test-Path $envFilePath) {
-    Get-Content $envFilePath | ForEach-Object {
+if (Test-Path $ENV_FILE_PATH) {
+    Get-Content $ENV_FILE_PATH | ForEach-Object {
         if ($_ -match "^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$") {
             $envName = $matches[1]
             $envValue = $matches[2]
@@ -43,7 +45,7 @@ if (Test-Path $envFilePath) {
         }
     }
 } else {
-    Write-Error "Error: .env file not found at $envFilePath"
+    Write-Error "Error: .env file not found at $ENV_FILE_PATH"
     Exit 1
 }
 
@@ -86,15 +88,15 @@ try {
 $IMAGE_TAG = git log -1 --pretty=format:%H # Récupérez le dernier commit hash pour l'ensemble du dépôt
 
 # --- 5. Build and Push Multi-Architecture Docker Image ---
-Write-Host "Building and pushing multi-architecture Docker image to ${DOCKER_IMAGE_NAME}:${IMAGE_TAG}..."
+Write-Host "Building and pushing multi-architecture Docker image to ${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}..."
 
 $platforms = "linux/amd64,linux/arm64/v8" # Target platforms
 
 try {
     # Pass the array of arguments using @() to ensure they are treated as separate arguments
-    docker buildx build --platform $platforms -t "${DOCKER_IMAGE_NAME}:${IMAGE_TAG}" --push .
-    Write-Host "Multi-architecture Docker image pushed successfully to ${DOCKER_IMAGE_NAME}:${IMAGE_TAG}"
-    Write-Host "scripts/update.sh $STACK_NAME $SERVICE_NAME $DOCKER_IMAGE_NAME $IMAGE_TAG"
+    docker buildx build --platform $platforms -t "${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}" --push .
+    Write-Host "Multi-architecture Docker image pushed successfully to ${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}"
+    Write-Host "scripts/update.sh $STACK_NAME $SERVICE_NAME $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG"
 } catch {
     Write-Error "Docker buildx build and push failed. Check error messages above."
     Exit 1
