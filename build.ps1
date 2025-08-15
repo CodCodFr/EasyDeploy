@@ -1,8 +1,6 @@
 # Définir le chemin du fichier de données
 $dataPath = ".\EasyDeploy\data.psd1"
 
-$PROJECT_GIT_NAME = "EasyDeploy/scripts"
-
 # Vérifier si le fichier de données existe
 if (-not (Test-Path -Path $dataPath)) {
     Write-Error "Erreur : Le fichier de données '$dataPath' est introuvable."
@@ -98,7 +96,7 @@ try {
     # Pass the array of arguments using @() to ensure they are treated as separate arguments
     docker buildx build --platform $platforms -t "${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}" --push .
     Write-Host "Multi-architecture Docker image pushed successfully to ${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}"
-    Write-Host "$PROJECT_GIT_NAME/update.sh $STACK_NAME $SERVICE_NAME $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG"
+    Write-Host "scripts/update.sh $STACK_NAME $SERVICE_NAME $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG"
 } catch {
     Write-Error "Docker buildx build and push failed. Check error messages above."
     Exit 1
