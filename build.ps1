@@ -11,7 +11,7 @@ if (-not (Test-Path -Path $dataPath)) {
 $data = Import-PowerShellDataFile -Path $dataPath
 
 # Définir la liste des variables obligatoires
-$requiredVariables = @("STACK_NAME", "SERVICE_NAME", "DOCKER_REPO", "DOCKER_IMAGE_NAME", "ENV_FILE_PATH", "BASE_HREF", "BUILDER_NAME", "SKIP_NG_BUILD")
+$requiredVariables = @("STACK_NAME", "SERVICE_NAME", "DOCKER_REPO", "DOCKER_IMAGE_NAME", "ENV_FILE_PATH", "BUILDER_NAME")
 
 # Vérifier la présence de chaque variable obligatoire
 foreach ($variable in $requiredVariables) {
@@ -27,9 +27,7 @@ $SERVICE_NAME = $data.SERVICE_NAME
 $DOCKER_REPO = $data.DOCKER_REPO
 $DOCKER_IMAGE_NAME = $data.DOCKER_IMAGE_NAME
 $ENV_FILE_PATH = $data.ENV_FILE_PATH
-$BASE_HREF = $data.BASE_HREF
 $BUILDER_NAME = $data.BUILDER_NAME
-$SKIP_NG_BUILD = $data.SKIP_NG_BUILD
 
 $DOCKER_IMAGE_NAME_COMPLETE = "$DOCKER_REPO/$DOCKER_IMAGE_NAME"
 
@@ -50,20 +48,13 @@ if (Test-Path $ENV_FILE_PATH) {
     Exit 1
 }
 
-# Skip Angular build if specified
-if ($SKIP_NG_BUILD) {
-    Write-Host "Skipping Angular build as per configuration."
-} else {
-    # --- 2. Build the Ionic application locally with correct base HREF ---
-    Write-Host "Running Ionic production build locally with a base HREF of '/'..."
-    # Nous utilisons --base-href / pour forcer l'application à charger toutes ses ressources depuis la racine du domaine
-    #npx ionic build --prod --base-href /observation/
-    ng build --output-path www --base-href $BASE_HREF
+    # --- 2. Build the Ionic application locally ---
+    Write-Host "Running npm build..."
+    npm run build
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Ionic build failed. Exiting."
+        Write-Error "npm build failed. Exiting."
         Exit 1
     }
-}
 
 # --- 3. Ensure Docker Buildx is set up ---
 Write-Host "Checking Docker Buildx setup..."
