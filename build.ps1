@@ -93,7 +93,11 @@ try {
     # Pass the array of arguments using @() to ensure they are treated as separate arguments
     docker buildx build --platform $platforms -t "${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}" --push .
     Write-Host "Multi-architecture Docker image pushed successfully to ${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}"
-    Write-Host "scripts/update.sh $STACK_NAME $SERVICE_NAME $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG"
+    # Define the string you want to copy
+    $command = "scripts/update.sh $STACK_NAME $SERVICE_NAME $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG"
+    # Write the string to the host AND copy it to the clipboard
+    Write-Host $command
+    $command | Set-Clipboard
 } catch {
     Write-Error "Docker buildx build and push failed. Check error messages above."
     Exit 1
