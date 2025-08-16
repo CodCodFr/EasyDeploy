@@ -65,16 +65,6 @@ if ($SKIP_NG_BUILD) {
     }
 }
 
-# --- 2. Build the Ionic application locally with correct base HREF ---
-Write-Host "Running Ionic production build locally with a base HREF of '/'..."
-# Nous utilisons --base-href / pour forcer l'application à charger toutes ses ressources depuis la racine du domaine
-#npx ionic build --prod --base-href /observation/
-ng build --output-path www --base-href $BASE_HREF
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Ionic build failed. Exiting."
-    Exit 1
-}
-
 # --- 3. Ensure Docker Buildx is set up ---
 Write-Host "Checking Docker Buildx setup..."
 # Use existing builder or create new one
