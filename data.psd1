@@ -6,4 +6,5 @@
     ENV_FILE_PATH = ""
     BASE_HREF = ""
     BUILDER_NAME = ""
+    SKIP_NG_BUILD = $false
 }
