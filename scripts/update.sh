@@ -34,6 +34,11 @@ echo "Mise à jour de la stack Docker Swarm '$stackName'..."
 echo "Service: $serviceName"
 echo "Image: $imageRepo:$imageTagToDeploy"
 
+# Mettre à jour l'image du service dans le docker-compose.yml
+# L'image est remplacée par la nouvelle imageTagToDeploy
+# This command must run BEFORE docker compose pull
+sed -i "s|image: $imageRepo:.*|image: $imageRepo:$imageTagToDeploy|" docker-compose.yml
+
 # Récupérer l'image spécifiée
 docker compose pull "$serviceName"
 
@@ -42,10 +47,6 @@ if [ $? -ne 0 ]; then
     echo "Erreur lors du pull de l'image Docker."
     exit 1
 fi
-
-# Mettre à jour l'image du service dans le docker-compose.yml
-# L'image est remplacée par la nouvelle imageTagToDeploy
-sed -i "s|image: $imageRepo:.*|image: $imageRepo:$imageTagToDeploy|" docker-compose.yml
 
 # Déployer la stack avec l'image mise à jour.
 # L'option --with-registry-auth est essentielle pour les registres privés.
