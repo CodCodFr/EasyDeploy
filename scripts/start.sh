@@ -1,17 +1,38 @@
 #!/bin/bash
 
-# Check if a stack name argument was provided
-if [ -z "$1" ]; then
-  echo "Error: Please provide a docker compose file name as an argument."
-  echo "Usage: ./deploy.sh <name>"
+# ==============================================================================
+# Script to deploy a Docker Compose project
+# ==============================================================================
+
+# ==============================================================================
+# Usage:
+# ./deploy.sh [docker_compose_file] [project_name]
+#
+# Example:
+# ./deploy.sh main.yml my_app
+# ==============================================================================
+
+# ==============================================================================
+# 1. Get arguments
+# ==============================================================================
+
+dockerComposeFile="$1"
+projectName="$2"
+
+# Check if both arguments were provided
+if [ -z "$dockerComposeFile" ] || [ -z "$projectName" ]; then
+  echo "Error: Please provide a docker compose file name and a project name as arguments."
+  echo "Usage: ./deploy.sh [docker_compose_file] [project_name]"
   exit 1
 fi
 
-NAME=$1
+# ==============================================================================
+# 2. Deploy the Docker Compose project
+# ==============================================================================
 
-echo "Deploying Docker compose '$NAME'..."
+echo "Deploying Docker compose '$dockerComposeFile' as project '$projectName'..."
 
-#docker stack deploy -c docker-compose.yml "$NAME" --with-registry-auth
-docker compose -f "$NAME" up -d --remove-orphans
+# Deploy the services, using the provided project name
+docker compose -f "$dockerComposeFile" -p "$projectName" up -d --remove-orphans
 
 echo "Deployment complete."
