@@ -5,21 +5,21 @@
 
 # Check if an argument was provided
 if [ -z "$1" ]; then
-  echo "Error: Please provide the name of the Docker stack to remove."
-  echo "Usage: ./remove_stack.sh <stack_name>"
+  echo "Error: Please provide the name of the Docker compose to remove."
+  echo "Usage: ./remove_stack.sh <_name>"
   exit 1
 fi
 
 # Store the provided argument in a variable
-STACK_NAME=$1
+NAME=$1
 
 # Remove the Docker stack
-echo "Removing Docker stack: $STACK_NAME..."
-docker stack rm "$STACK_NAME"
+echo "Removing Docker compose: $NAME..."
+docker compose -f "$NAME" down --remove-orphans
 
 # Check the exit status of the previous command
 if [ $? -eq 0 ]; then
-  echo "Stack '$STACK_NAME' removed successfully."
+  echo "Services '$NAME' removed successfully."
 else
-  echo "Error: Failed to remove stack '$STACK_NAME'."
+  echo "Error: Failed to remove stack '$NAME'."
 fi

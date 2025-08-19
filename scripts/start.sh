@@ -2,15 +2,16 @@
 
 # Check if a stack name argument was provided
 if [ -z "$1" ]; then
-  echo "Error: Please provide a stack name as an argument."
-  echo "Usage: ./deploy.sh <stack_name>"
+  echo "Error: Please provide a docker compose file name as an argument."
+  echo "Usage: ./deploy.sh <name>"
   exit 1
 fi
 
-STACK_NAME=$1
+NAME=$1
 
-echo "Deploying Docker stack '$STACK_NAME'..."
+echo "Deploying Docker compose '$NAME'..."
 
-docker stack deploy -c docker-compose.yml "$STACK_NAME" --with-registry-auth
+#docker stack deploy -c docker-compose.yml "$NAME" --with-registry-auth
+docker compose -f "$NAME" up -d --remove-orphans
 
 echo "Deployment complete."
