@@ -6,7 +6,7 @@
 
 # ==============================================================================
 # Utilisation:
-# ./deploy_script_compose.sh [service_name] [image_repo] [image_tag] [docker_compose_file]
+# ./deploy_script_compose.sh [service_name] [image_repo] [image_tag] [docker_compose_file] [project_name]
 #
 # Exemple:
 # ./deploy_script_compose.sh future-front ghcr.io/gaetanse/future-front e20e92094aec8e551f56176a3cdcfee19a15d7a8 main.yml
@@ -20,11 +20,12 @@ serviceName="$1"
 imageRepo="$2"
 imageTagToDeploy="$3"
 dockerComposeFile="$4"
+projectName="$5"
 
 # Vérification des arguments
-if [ -z "$serviceName" ] || [ -z "$imageRepo" ] || [ -z "$imageTagToDeploy" ] || [ -z "$dockerComposeFile" ]; then
+if [ -z "$serviceName" ] || [ -z "$imageRepo" ] || [ -z "$imageTagToDeploy" ] || [ -z "$dockerComposeFile" ] || [ -z "$projectName" ]; then
     echo "Erreur: Tous les arguments sont requis."
-    echo "Utilisation: ./deploy_script_compose.sh [service_name] [image_repo] [image_tag] [docker_compose_file]"
+    echo "Utilisation: ./deploy_script_compose.sh [service_name] [image_repo] [image_tag] [docker_compose_file] [project_name]"
     exit 1
 fi
 
@@ -48,7 +49,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Démarrer le service avec l'image mise à jour.
-docker compose -f "$dockerComposeFile" up -d --no-deps --force-recreate "$serviceName"
+docker compose -f "$dockerComposeFile" -p "$projectName" up -d --no-deps --force-recreate --remove-orphans "$serviceName"
 
 # Vérifier si la commande précédente a échoué
 if [ $? -ne 0 ]; then
