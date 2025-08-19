@@ -22,7 +22,7 @@ imageTagToDeploy="$3"
 dockerComposeFile="$4"
 
 # Vérification des arguments
-if [ -z "$serviceName" ] || [ -z "$imageRepo" ] || [ -z "$imageTagToDeploy" ] || [-z "$dockerComposeFile"]; then
+if [ -z "$serviceName" ] || [ -z "$imageRepo" ] || [ -z "$imageTagToDeploy" ] || [ -z "$dockerComposeFile" ]; then
     echo "Erreur: Tous les arguments sont requis."
     echo "Utilisation: ./deploy_script_compose.sh [service_name] [image_repo] [image_tag] [docker_compose_file]"
     exit 1
@@ -35,13 +35,11 @@ fi
 echo "Mise à jour du service Docker Compose '$serviceName'..."
 echo "Image: $imageRepo:$imageTagToDeploy"
 
-# Mettre à jour l'image du service dans le docker-compose.yml
-# L'image est remplacée par la nouvelle imageTagToDeploy
-# L'option -i permet d'éditer le fichier en place.
-sed -i "s|image: $imageRepo:.*|image: $imageRepo:$imageTagToDeploy|" $dockerComposeFile
+# Mettre à jour l'image du service dans le fichier de configuration spécifié
+sed -i "s|image: $imageRepo:.*|image: $imageRepo:$imageTagToDeploy|" "$dockerComposeFile"
 
 # Récupérer l'image spécifiée
-docker compose pull "$serviceName"
+docker compose -f "$dockerComposeFile" pull "$serviceName"
 
 # Vérifier si la commande précédente a échoué
 if [ $? -ne 0 ]; then
@@ -50,9 +48,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Démarrer le service avec l'image mise à jour.
-# L'option --no-deps garantit que seul le service spécifié est relancé.
-# L'option --force-recreate garantit que le conteneur est recréé avec la nouvelle image.
-docker compose up -d --no-deps --force-recreate "$serviceName"
+docker compose -f "$dockerComposeFile" up -d --no-deps --force-recreate "$serviceName"
 
 # Vérifier si la commande précédente a échoué
 if [ $? -ne 0 ]; then
