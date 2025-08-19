@@ -5,4 +5,5 @@
     ENV_FILE_PATH = ""
     BUILDER_NAME = ""
     DOCKER_COMPOSE_FILE = ""
+    PROJECT_NAME = ""
 }
