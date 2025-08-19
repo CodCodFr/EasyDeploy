@@ -6,10 +6,10 @@
 
 # ==============================================================================
 # Utilisation:
-# ./deploy_script_compose.sh [service_name] [image_repo] [image_tag]
+# ./deploy_script_compose.sh [service_name] [image_repo] [image_tag] [docker_compose_file]
 #
 # Exemple:
-# ./deploy_script_compose.sh future-front ghcr.io/gaetanse/future-front e20e92094aec8e551f56176a3cdcfee19a15d7a8
+# ./deploy_script_compose.sh future-front ghcr.io/gaetanse/future-front e20e92094aec8e551f56176a3cdcfee19a15d7a8 main.yml
 # ==============================================================================
 
 # ==============================================================================
@@ -19,11 +19,12 @@
 serviceName="$1"
 imageRepo="$2"
 imageTagToDeploy="$3"
+dockerComposeFile="$4"
 
 # Vérification des arguments
-if [ -z "$serviceName" ] || [ -z "$imageRepo" ] || [ -z "$imageTagToDeploy" ]; then
+if [ -z "$serviceName" ] || [ -z "$imageRepo" ] || [ -z "$imageTagToDeploy" ] || [-z "$dockerComposeFile"]; then
     echo "Erreur: Tous les arguments sont requis."
-    echo "Utilisation: ./deploy_script_compose.sh [service_name] [image_repo] [image_tag]"
+    echo "Utilisation: ./deploy_script_compose.sh [service_name] [image_repo] [image_tag] [docker_compose_file]"
     exit 1
 fi
 
@@ -37,7 +38,7 @@ echo "Image: $imageRepo:$imageTagToDeploy"
 # Mettre à jour l'image du service dans le docker-compose.yml
 # L'image est remplacée par la nouvelle imageTagToDeploy
 # L'option -i permet d'éditer le fichier en place.
-sed -i "s|image: $imageRepo:.*|image: $imageRepo:$imageTagToDeploy|" docker-compose.yml
+sed -i "s|image: $imageRepo:.*|image: $imageRepo:$imageTagToDeploy|" $dockerComposeFile
 
 # Récupérer l'image spécifiée
 docker compose pull "$serviceName"
