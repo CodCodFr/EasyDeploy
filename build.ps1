@@ -11,7 +11,7 @@ if (-not (Test-Path -Path $dataPath)) {
 $data = Import-PowerShellDataFile -Path $dataPath
 
 # Définir la liste des variables obligatoires
-$requiredVariables = @("STACK_NAME", "SERVICE_NAME", "DOCKER_REPO", "DOCKER_IMAGE_NAME", "ENV_FILE_PATH", "BUILDER_NAME")
+$requiredVariables = @("SERVICE_NAME", "DOCKER_REPO", "DOCKER_IMAGE_NAME", "ENV_FILE_PATH", "BUILDER_NAME", "DOCKER_COMPOSE_FILE")
 
 # Vérifier la présence de chaque variable obligatoire
 foreach ($variable in $requiredVariables) {
@@ -22,12 +22,12 @@ foreach ($variable in $requiredVariables) {
 }
 
 # Affecter les valeurs importées à vos variables
-$STACK_NAME = $data.STACK_NAME
 $SERVICE_NAME = $data.SERVICE_NAME
 $DOCKER_REPO = $data.DOCKER_REPO
 $DOCKER_IMAGE_NAME = $data.DOCKER_IMAGE_NAME
 $ENV_FILE_PATH = $data.ENV_FILE_PATH
 $BUILDER_NAME = $data.BUILDER_NAME
+$DOCKER_COMPOSE_FILE = $data.DOCKER_COMPOSE_FILE
 
 $DOCKER_IMAGE_NAME_COMPLETE = "$DOCKER_REPO/$DOCKER_IMAGE_NAME"
 
@@ -94,7 +94,7 @@ try {
     docker buildx build --platform $platforms -t "${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}" --push .
     Write-Host "Multi-architecture Docker image pushed successfully to ${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}"
     # Define the string you want to copy
-    $command = "scripts/update.sh $SERVICE_NAME $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG"
+    $command = "scripts/update.sh $SERVICE_NAME $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG $DOCKER_COMPOSE_FILE"
     # Write the string to the host AND copy it to the clipboard
     Write-Host $command
     $command | Set-Clipboard
