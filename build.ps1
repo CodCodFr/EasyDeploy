@@ -7,22 +7,11 @@ if (-not (Test-Path -Path $dataPath)) {
     exit 1
 }
 
+$IMAGE_TAG = git log -1 --pretty=format:%H # Récupérez le dernier commit hash pour l'ensemble du dépôt
+
 # Use dot-sourcing to load all variables from the data script.
 # This executes the data.ps1 script, and the variables become available in the current scope.
 . $dataPath
-
-# Définir la liste des variables obligatoires TODO if check for variables needed
-
-# Affecter les valeurs importées à vos variables
-#$SERVICE_NAME = $data.SERVICE_NAME
-#$DOCKER_REPO = $data.DOCKER_REPO
-#$DOCKER_IMAGE_NAME = $data.DOCKER_IMAGE_NAME
-#$ENV_FILE_PATH = $data.ENV_FILE_PATH
-#$BUILDER_NAME = $data.BUILDER_NAME
-#$DOCKER_COMPOSE_FILE = $data.DOCKER_COMPOSE_FILE
-#$PROJECT_NAME = $data.PROJECT_NAME
-#$SSH_BAT_FILE = $data.SSH_BAT_FILE
-#$SSH_COMMAND = $data.SSH_COMMAND
 
 $DOCKER_IMAGE_NAME_COMPLETE = "$DOCKER_REPO/$DOCKER_IMAGE_NAME"
 
