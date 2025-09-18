@@ -29,6 +29,8 @@ $ENV_FILE_PATH = $data.ENV_FILE_PATH
 $BUILDER_NAME = $data.BUILDER_NAME
 $DOCKER_COMPOSE_FILE = $data.DOCKER_COMPOSE_FILE
 $PROJECT_NAME = $data.PROJECT_NAME
+$SSH_BAT_FILE = $data.SSH_BAT_FILE
+$SSH_COMMAND = $data.SSH_COMMAND
 
 $DOCKER_IMAGE_NAME_COMPLETE = "$DOCKER_REPO/$DOCKER_IMAGE_NAME"
 
@@ -94,11 +96,22 @@ try {
     # Pass the array of arguments using @() to ensure they are treated as separate arguments
     docker buildx build --platform $platforms -t "${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}" --push .
     Write-Host "Multi-architecture Docker image pushed successfully to ${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}"
-    # Define the string you want to copy
-    $command = "scripts/update.sh $SERVICE_NAME $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG $DOCKER_COMPOSE_FILE $PROJECT_NAME"
-    # Write the string to the host AND copy it to the clipboard
-    Write-Host $command
-    $command | Set-Clipboard
+    
+    # Check if the .bat file exists
+    if (-not (Test-Path -Path $SSH_BAT_FILE -PathType Leaf)) {
+        Write-Error "Error: The .bat file was not found at '$SSH_BAT_FILE'. Cannot execute remote command."
+        Exit 1
+    } else {
+        # Execute the .bat file and pass the variables as a single argument
+        # The script will wait for the bat file to complete
+        & $SSH_BAT_FILE $SSH_COMMAND
+
+        Write-Host "Executed remote command successfully."
+    }
+
+    # Write the command to the host AND copy it to the clipboard
+    Write-Host "Command copied to clipboard: $SSH_COMMAND"
+    $SSH_COMMAND | Set-Clipboard
 } catch {
     Write-Error "Docker buildx build and push failed. Check error messages above."
     Exit 1

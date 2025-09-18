@@ -6,4 +6,6 @@
     BUILDER_NAME = ""
     DOCKER_COMPOSE_FILE = ""
     PROJECT_NAME = ""
+    SSH_BAT_FILE = ""
+    SSH_COMMAND = ""
 }
