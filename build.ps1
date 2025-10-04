@@ -7,8 +7,6 @@ if (-not (Test-Path -Path $dataPath)) {
     exit 1
 }
 
-$IMAGE_TAG = git log -1 --pretty=format:%H # Récupérez le dernier commit hash pour l'ensemble du dépôt
-
 # Use dot-sourcing to load all variables from the data script.
 # This executes the data.ps1 script, and the variables become available in the current scope.
 . $dataPath
@@ -66,7 +64,7 @@ try {
     Exit 1
 }
 
-$IMAGE_TAG = git log -1 --pretty=format:%H # Récupérez le dernier commit hash pour l'ensemble du dépôt
+$IMAGE_TAG = Get-Date -Format "yyyyMMddHHmmss"
 
 # --- 5. Build and Push Multi-Architecture Docker Image ---
 Write-Host "Building and pushing multi-architecture Docker image to ${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}..."
