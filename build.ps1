@@ -77,7 +77,7 @@ try {
     Write-Host "Multi-architecture Docker image pushed successfully to ${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}"
 
     # 6. Créez la commande SSH complète avec le tag qui vient d'être utilisé
-    $SSH_COMMAND = "$SSH_COMMAND_BASE $IMAGE_TAG $DOCKER_COMPOSE_FILE $PROJECT_NAME"
+    $SSH_COMMAND_COMPLETE = "$SSH_COMMAND $IMAGE_TAG $DOCKER_COMPOSE_FILE $PROJECT_NAME"
     
     # Check if the .bat file exists
     if (-not (Test-Path -Path $SSH_BAT_FILE -PathType Leaf)) {
@@ -86,7 +86,7 @@ try {
     } else {
         # Execute the .bat file and pass the variables as a single argument
         # The script will wait for the bat file to complete
-        & $SSH_BAT_FILE $SSH_COMMAND
+        & $SSH_BAT_FILE $SSH_COMMAND_COMPLETE
 
         Write-Host "Executed remote command successfully."
     }
