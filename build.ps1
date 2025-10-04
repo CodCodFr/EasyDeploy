@@ -75,6 +75,9 @@ try {
     # Pass the array of arguments using @() to ensure they are treated as separate arguments
     docker buildx build --platform $platforms -t "${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}" --push .
     Write-Host "Multi-architecture Docker image pushed successfully to ${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}"
+
+    # 6. Créez la commande SSH complète avec le tag qui vient d'être utilisé
+    $SSH_COMMAND = "$SSH_COMMAND_BASE $IMAGE_TAG $DOCKER_COMPOSE_FILE $PROJECT_NAME"
     
     # Check if the .bat file exists
     if (-not (Test-Path -Path $SSH_BAT_FILE -PathType Leaf)) {
