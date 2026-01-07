@@ -5,8 +5,8 @@ Write-Host "Vérification de la mise à jour du dépôt Git..."
 if (Test-Path .git) {
     git fetch origin
     $local = git rev-parse HEAD
-    $remote = git rev-parse @{u}
-    $base = git merge-base HEAD @{u}
+    $remote = git rev-parse "@{u}"
+    $base = git merge-base HEAD "@{u}"
 
     if ($local -eq $remote) {
         Write-Host "✅ Le dépôt est à jour." -ForegroundColor Green
