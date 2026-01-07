@@ -65,7 +65,7 @@ if ($TYPE -ne "web") {
         Exit 1
     }
 }
-else if($TYPE -eq "python") {
+elseif($TYPE -eq "python") {
     Write-Host "Confirmed TYPE is 'python'. Proceeding with Python build."
     # --- 2. Build the Python application locally ---
     Write-Host "Running python setup..."
