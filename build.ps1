@@ -30,6 +30,8 @@ if (Test-Path $ENV_FILE_PATH) {
     Exit 1
 }
 
+if ($TYPE -ne "web") {
+    Write-Host "Confirmed TYPE is '$TYPE'. Proceeding with Ionic build."
     # --- 2. Build the Ionic application locally ---
     Write-Host "Running npm build..."
     npm run build
@@ -37,6 +39,17 @@ if (Test-Path $ENV_FILE_PATH) {
         Write-Error "npm build failed. Exiting."
         Exit 1
     }
+}
+else if($TYPE -eq "python") {
+    Write-Host "Confirmed TYPE is 'python'. Proceeding with Python build."
+    # --- 2. Build the Python application locally ---
+    Write-Host "Running python setup..."
+    #python main.py install
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Python setup failed. Exiting."
+        Exit 1
+    }
+}
 
 # --- 3. Ensure Docker Buildx is set up ---
 Write-Host "Checking Docker Buildx setup..."
