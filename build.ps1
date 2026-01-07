@@ -55,7 +55,7 @@ if (Test-Path $ENV_FILE_PATH) {
     Exit 1
 }
 
-if ($TYPE -ne "web") {
+if ($TYPE -eq "web") {
     Write-Host "Confirmed TYPE is '$TYPE'. Proceeding with Ionic build."
     # --- 2. Build the Ionic application locally ---
     Write-Host "Running npm build..."
@@ -65,7 +65,7 @@ if ($TYPE -ne "web") {
         Exit 1
     }
 }
-elseif ($TYPE -ne "python") {
+elseif ($TYPE -eq "python") {
     Write-Host "Confirmed TYPE is 'python'. Proceeding with Python build."
     # --- 2. Build the Python application locally ---
     Write-Host "Running python setup..."
