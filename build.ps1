@@ -70,10 +70,10 @@ elseif ($TYPE -eq "python") {
     # --- 2. Build the Python application locally ---
     Write-Host "Running python setup..."
     #python main.py install
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Python setup failed. Exiting."
-        Exit 1
-    }
+    #if ($LASTEXITCODE -ne 0) {
+    #    Write-Error "Python setup failed. Exiting."
+    #    Exit 1
+    #}
 }
 
 # --- 3. Ensure Docker Buildx is set up ---
