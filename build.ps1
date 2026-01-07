@@ -1,3 +1,28 @@
+# --- 0. Vérification de la version du Repo Git ---
+Write-Host "Vérification de la mise à jour du dépôt Git..."
+
+# Vérifier si on est dans un dépôt Git
+if (Test-Path .git) {
+    git fetch origin
+    $local = git rev-parse HEAD
+    $remote = git rev-parse @{u}
+    $base = git merge-base HEAD @{u}
+
+    if ($local -eq $remote) {
+        Write-Host "✅ Le dépôt est à jour." -ForegroundColor Green
+    } elseif ($local -eq $base) {
+        Write-Error "❌ Votre dépôt local est en retard par rapport au serveur. Veuillez faire un 'git pull' avant de déployer."
+        exit 1
+    } elseif ($remote -eq $base) {
+        Write-Warning "⚠️ Vous avez des commits locaux non poussés. Le déploiement continuera avec votre version locale."
+    } else {
+        Write-Error "❌ Les branches locale et distante ont divergé."
+        exit 1
+    }
+} else {
+    Write-Warning "Aucun dépôt Git détecté dans ce dossier. Saut de la vérification."
+}
+
 # Définir le chemin du fichier de données
 $dataPath = ".\EasyDeploy\data.ps1"
 
