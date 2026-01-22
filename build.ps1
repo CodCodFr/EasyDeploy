@@ -130,8 +130,8 @@ try {
     }
 
     # Write the command to the host AND copy it to the clipboard
-    Write-Host "Command copied to clipboard: $SSH_COMMAND"
-    $SSH_COMMAND | Set-Clipboard
+    Write-Host "Command copied to clipboard: $SSH_COMMAND_COMPLETE"
+    $SSH_COMMAND_COMPLETE | Set-Clipboard
 } catch {
     Write-Error "Docker buildx build and push failed. Check error messages above."
     Exit 1
