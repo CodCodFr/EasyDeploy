@@ -38,21 +38,37 @@ if (-not (Test-Path -Path $dataPath)) {
 
 $DOCKER_IMAGE_NAME_COMPLETE = "$DOCKER_REPO/$DOCKER_IMAGE_NAME"
 
-# --- 1. Load environment variables from .env file ---
-Write-Host "Loading environment variables from .env file..."
-if (Test-Path $ENV_FILE_PATH) {
-    Get-Content $ENV_FILE_PATH | ForEach-Object {
-        if ($_ -match "^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$") {
-            $envName = $matches[1]
-            $envValue = $matches[2]
-            # Set for the current process, accessible by subsequent commands
-            [System.Environment]::SetEnvironmentVariable($envName, $envValue, [System.EnvironmentVariableTarget]::Process)
-            Write-Host "  - Loaded $envName"
-        }
-    }
-} else {
-    Write-Error "Error: .env file not found at $ENV_FILE_PATH"
-    Exit 1
+function Load-EnvFile {
+    param ([string]$filePath)
+    if (Test-Path $filePath) {
+        Write-Host "Loading environment variables from $filePath..."
+        Get-Content $filePath | ForEach-Object {
+            # Regex to match KEY=VALUE, ignoring comments and empty lines
+            if ($_ -match "^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$") {
+                $envName = $matches[1]
+                $envValue = $matches[2]
+                [System.Environment]::SetEnvironmentVariable($envName, $envValue, [System.EnvironmentVariableTarget]::Process)
+                Write-Host "  - Loaded $envName"
+            }
+        }
+    }
+    else {
+        return $false
+    }
+    return $true
+}
+
+# --- PROCESS FILES ---
+
+# 1. Mandatory: GIT_ENV_FILE_PATH
+if (-not (Load-EnvFile -filePath $GIT_ENV_FILE_PATH)) {
+    Write-Error "Error: REQUIRED file not found at $GIT_ENV_FILE_PATH"
+    Exit 1
+}
+
+# 2. Optional: ENV_FILE_PATH (Skip if not found)
+if (-not (Load-EnvFile -filePath $ENV_FILE_PATH)) {
+    Write-Host "Notice: Optional file at $ENV_FILE_PATH not found. Skipping..." -ForegroundColor Yellow
 }
 
 if ($TYPE -eq "web") {
