@@ -126,29 +126,47 @@ Write-Host "Building and pushing multi-architecture Docker image to ${DOCKER_IMA
 $platforms = "linux/amd64,linux/arm64/v8" # Target platforms
 
 try {
-    # Pass the array of arguments using @() to ensure they are treated as separate arguments
-    docker buildx build --platform $platforms -t "${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}" --push .
-    Write-Host "Multi-architecture Docker image pushed successfully to ${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}"
+    docker buildx build --platform $platforms -t "${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}" --push .
+    Write-Host "Multi-architecture Docker image pushed successfully."
 
-    # 6. Créez la commande SSH complète avec le tag qui vient d'être utilisé
-    $SSH_COMMAND_COMPLETE = "$SSH_COMMAND $IMAGE_TAG $DOCKER_COMPOSE_FILE $PROJECT_NAME"
-    
-    # Check if the .bat file exists
-    if (-not (Test-Path -Path $SSH_BAT_FILE -PathType Leaf)) {
-        Write-Error "Error: The .bat file was not found at '$SSH_BAT_FILE'. Cannot execute remote command."
-        Exit 1
-    } else {
-        # Execute the .bat file and pass the variables as a single argument
-        # The script will wait for the bat file to complete
-        & $SSH_BAT_FILE $SSH_COMMAND_COMPLETE
+    # --- 6. Génération de l'injection des variables (Zéro fichier sur VPS) ---
+    Write-Host "Préparation de l'export des variables d'environnement..."
+    $exportString = ""
 
-        Write-Host "Executed remote command successfully."
+    # On récupère le contenu des deux fichiers .env chargés au début
+    $envFiles = @($ENV_FILE_PATH)
+    foreach ($file in $envFiles) {
+        if (Test-Path $file) {
+            Get-Content $file | ForEach-Object {
+                # On extrait KEY=VALUE en ignorant les commentaires (#)
+                if ($_ -match "^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$") {
+                    $name = $matches[1]
+                    $value = $matches[2]
+                    # On ajoute l'export pour Linux (avec guillemets simples pour protéger les valeurs)
+                    $exportString += "export $name='$value'; "
+                }
+            }
+        }
     }
 
-    # Write the command to the host AND copy it to the clipboard
-    Write-Host "Command copied to clipboard: $SSH_COMMAND_COMPLETE"
-    $SSH_COMMAND_COMPLETE | Set-Clipboard
+    # On assemble la commande finale : Exports + CD + Update Script
+    $REMOTE_COMMAND = "$exportString cd EasyDeploy && ./scripts/update.sh $serviceName $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG $DOCKER_COMPOSE_FILE $PROJECT_NAME"
+
+    # --- 7. Exécution via le fichier .bat ---
+    if (-not (Test-Path -Path $SSH_BAT_FILE -PathType Leaf)) {
+        Write-Error "Error: Le fichier .bat est introuvable à '$SSH_BAT_FILE'."
+        Exit 1
+    } else {
+        Write-Host "Envoi de la commande et des secrets au VPS..." -ForegroundColor Cyan
+        & $SSH_BAT_FILE $REMOTE_COMMAND
+        Write-Host "✅ Déploiement terminé avec succès." -ForegroundColor Green
+    }
+
+    # Copie dans le presse-papier pour debug si besoin
+    $REMOTE_COMMAND | Set-Clipboard
+    Write-Host "Commande complète copiée dans le presse-papier."
+
 } catch {
-    Write-Error "Docker buildx build and push failed. Check error messages above."
-    Exit 1
+    Write-Error "Docker buildx build and push failed."
+    Exit 1
 }
