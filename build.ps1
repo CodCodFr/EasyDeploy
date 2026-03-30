@@ -133,24 +133,24 @@ try {
     Write-Host "Préparation de l'export des variables d'environnement..."
     $exportString = ""
 
-    # On récupère le contenu des deux fichiers .env chargés au début
-    $envFiles = @($ENV_FILE_PATH)
-    foreach ($file in $envFiles) {
-        if (Test-Path $file) {
-            Get-Content $file | ForEach-Object {
-                # On extrait KEY=VALUE en ignorant les commentaires (#)
-                if ($_ -match "^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$") {
-                    $name = $matches[1]
-                    $value = $matches[2]
-                    # On ajoute l'export pour Linux (avec guillemets simples pour protéger les valeurs)
-                    $exportString += "export $name='$value'; "
-                }
+    # On récupère le contenu du fichier .env
+    if (Test-Path $ENV_FILE_PATH) {
+        Get-Content $ENV_FILE_PATH | ForEach-Object {
+            # On ignore les commentaires et les lignes vides
+            if ($_ -match "^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$") {
+                $name = $matches[1]
+                $value = $matches[2]
+                # On échappe les $ pour éviter que Bash ne tente de les interpréter prématurément
+                $value = $value -replace '\$', '\$'
+                # On construit la chaîne d'export
+                $exportString += "export $name=`"$value`"; "
             }
         }
     }
 
-    # On assemble la commande finale : Exports + CD + Update Script
-    $REMOTE_COMMAND = "$exportString cd EasyDeploy && ./scripts/update.sh $serviceName $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG $DOCKER_COMPOSE_FILE $PROJECT_NAME"
+    # On assemble la commande. 
+    # TRICK : On met toute la commande entre guillemets simples pour SSH
+    $REMOTE_COMMAND = "bash -c `"$exportString cd EasyDeploy && ./scripts/update.sh $serviceName $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG $DOCKER_COMPOSE_FILE $PROJECT_NAME`""
 
     # --- 7. Exécution via le fichier .bat ---
     if (-not (Test-Path -Path $SSH_BAT_FILE -PathType Leaf)) {
