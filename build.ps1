@@ -129,28 +129,25 @@ try {
     docker buildx build --platform $platforms -t "${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}" --push .
     Write-Host "Multi-architecture Docker image pushed successfully."
 
-    # --- 6. Génération de l'injection des variables (Zéro fichier sur VPS) ---
+    # --- 6. Génération de l'injection des variables ---
     Write-Host "Préparation de l'export des variables d'environnement..."
     $exportString = ""
 
-    # On récupère le contenu du fichier .env
     if (Test-Path $ENV_FILE_PATH) {
         Get-Content $ENV_FILE_PATH | ForEach-Object {
-            # On ignore les commentaires et les lignes vides
             if ($_ -match "^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$") {
                 $name = $matches[1]
                 $value = $matches[2]
-                # On échappe les $ pour éviter que Bash ne tente de les interpréter prématurément
-                $value = $value -replace '\$', '\$'
-                # On construit la chaîne d'export
-                $exportString += "export $name=`"$value`"; "
+                # Nettoyage simple de la valeur
+                $value = $value -replace "'", "" # On enlève les quotes simples internes
+                $exportString += "export $name='$value'; "
             }
         }
     }
 
-    # On assemble la commande. 
-    # TRICK : On met toute la commande entre guillemets simples pour SSH
-    $REMOTE_COMMAND = "bash -c `"$exportString cd EasyDeploy && ./scripts/update.sh $serviceName $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG $DOCKER_COMPOSE_FILE $PROJECT_NAME`""
+    # On construit la commande sans bash -c pour éviter les conflits de quotes
+    # On met tout à la suite. SSH s'occupera de l'exécuter dans le shell distant.
+    $REMOTE_COMMAND = "$exportString cd EasyDeploy && ./scripts/update.sh $serviceName $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG $DOCKER_COMPOSE_FILE $PROJECT_NAME"
 
     # --- 7. Exécution via le fichier .bat ---
     if (-not (Test-Path -Path $SSH_BAT_FILE -PathType Leaf)) {
