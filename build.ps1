@@ -147,7 +147,7 @@ try {
 
     # On construit la commande sans bash -c pour éviter les conflits de quotes
     # On met tout à la suite. SSH s'occupera de l'exécuter dans le shell distant.
-    $REMOTE_COMMAND = "$exportString cd EasyDeploy && ./scripts/update.sh $serviceName $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG $DOCKER_COMPOSE_FILE $PROJECT_NAME"
+    $REMOTE_COMMAND = "$exportString cd EasyDeploy && ./scripts/update.sh $SERVICE_NAME $DOCKER_IMAGE_NAME_COMPLETE $IMAGE_TAG $DOCKER_COMPOSE_FILE $PROJECT_NAME"
 
     # --- 7. Exécution via le fichier .bat ---
     if (-not (Test-Path -Path $SSH_BAT_FILE -PathType Leaf)) {
