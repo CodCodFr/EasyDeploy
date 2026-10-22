@@ -126,7 +126,7 @@ Write-Host "Building and pushing multi-architecture Docker image to ${DOCKER_IMA
 $platforms = "linux/amd64,linux/arm64/v8" # Target platforms
 
 try {
-    docker buildx build --platform $platforms -t "${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}" --push .
+    docker buildx build --no-cache --platform $platforms -t "${DOCKER_IMAGE_NAME_COMPLETE}:${IMAGE_TAG}" --push .
     Write-Host "Multi-architecture Docker image pushed successfully."
 
     # --- 6. Génération de l'injection des variables ---
